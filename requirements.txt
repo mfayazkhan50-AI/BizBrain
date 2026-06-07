@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+chainlit
+chromadb
+rank-bm25
+sentence-transformers
+cohere
+groq
+langchain
+langchain-community
+pypdf
+pydantic
+ragas
+python-dotenv
