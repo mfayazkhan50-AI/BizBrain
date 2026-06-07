@@ -25,6 +25,14 @@ collection = client.get_or_create_collection(
 
 
 def ingest_pdf(file_path: str):
+    file_name = os.path.basename(file_path)
+    
+    # duplicate check
+    existing = collection.get(where={"source": file_name})
+    if existing["documents"]:
+        print(f"Already ingested: {file_name}")
+        return
+
     reader = PdfReader(file_path)
     full_text = ""
     for i, page in enumerate(reader.pages):
@@ -32,22 +40,18 @@ def ingest_pdf(file_path: str):
         if text:
             full_text += f"\n[Page {i+1}]\n{text}"
 
-        
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=50
-        )
-        chunks = splitter.split_text(full_text)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50
+    )
+    chunks = splitter.split_text(full_text)
 
-        embeddings = embedder_fn(chunks)
+    ids = [f"{file_name}_chunk_{i}" for i in range(len(chunks))]
 
-        file_name = os.path.basename(file_path)
-        ids = [f"{file_name}_chunk_{i}" for i in range(len(chunks))]
+    collection.add(
+        documents=chunks,
+        ids=ids,
+        metadatas=[{"source": file_name} for _ in chunks]
+    )
 
-        collection.add(
-            documents=chunks,
-            ids=ids,
-            metadatas=[{"source": file_name} for _ in chunks]
-        )
-
-        print(f"Done - {len(chunks)} chunks saved to {file_name}")
+    print(f"Done - {len(chunks)} chunks saved to {file_name}")

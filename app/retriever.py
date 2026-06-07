@@ -18,6 +18,11 @@ collection = client.get_or_create_collection(
 )
 
 def hybrid_search(query, top_k: int = 5):
+    
+    all_data = collection.get()
+    if not all_data["documents"]:
+        return [], []
+    
     dense_results = collection.query(
         query_texts=[query],
         n_results=top_k
